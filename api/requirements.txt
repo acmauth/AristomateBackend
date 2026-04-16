@@ -1,0 +1,6 @@
+httpx
+fastapi
+beautifulsoup4
+uvicorn
+requests
+dotenv

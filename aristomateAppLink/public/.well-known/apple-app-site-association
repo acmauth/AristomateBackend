@@ -1,0 +1,15 @@
+{
+  "applinks": {
+      "details": [
+           {
+             "appIDs": [ "ALRA2U6L5S.app.aristomate.gr", "J6R5ZEA62L.gr.auth.aristomate" ],
+             "components": [
+               {
+                  "/": "/authsso/*",
+                  "comment": "Matches any URL with a path that starts with /authsso/."
+               }
+             ]
+           }
+       ]
+   }
+}

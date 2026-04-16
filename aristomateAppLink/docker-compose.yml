@@ -1,0 +1,7 @@
+version: '3.8'
+
+services:
+  applink:
+    build: .
+    ports:
+      - "9666:8000"

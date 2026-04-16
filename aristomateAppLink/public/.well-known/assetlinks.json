@@ -1,0 +1,54 @@
+[{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["D2:30:DC:BA:0A:C3:70:3F:A3:5C:38:FF:ED:2B:B1:3C:04:9F:1A:D3:7C:C0:35:89:D1:28:79:93:F5:A7:6C:84",
+                "A5:81:80:DC:53:A2:AC:10:FF:5E:3F:0D:9B:F5:25:E2:F2:CA:14:78:39:BC:AD:2E:25:BE:16:33:0C:81:23:04",
+                "CC:71:C5:7B:34:8D:41:1F:4F:ED:CA:44:E8:0A:2E:76:3A:04:DB:78:F6:48:A7:34:7C:3B:04:1C:F0:54:EC:ED",
+                "60:3F:25:42:90:06:95:C9:FA:4E:2B:CA:BC:84:B9:17:E3:85:21:CD:C7:65:39:97:12:89:0D:68:58:47:9E:26",
+                "B9:28:0E:C6:E6:17:1F:E0:A4:79:43:55:B6:4E:12:DA:E8:2E:5A:2D:96:7E:2A:69:B4:5E:51:FB:63:56:52:2D",
+                "D9:4F:12:38:14:27:AE:2E:50:27:69:8B:E7:BA:67:E6:78:5E:E9:26:03:74:2F:A3:B0:1E:78:D0:C3:3B:18:1A",
+                "36:6F:CB:D2:23:17:61:CF:4D:E3:BC:07:A3:B9:76:23:A8:43:17:F9:E3:2E:2D:48:51:FD:BE:A0:6D:F4:40:C7",
+	              "2A:E1:A4:B4:0C:CA:15:72:EA:2B:44:85:72:7E:98:DF:5A:07:20:9D:27:28:C6:D1:4C:FF:92:B4:A2:5C:BC:EA"
+             ] }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["AB:9B:CE:1F:D8:8C:92:F1:40:6B:87:AB:B8:5B:A4:C2:89:30:19:D8:32:42:4A:32:95:E8:F5:9F:D7:A8:1A:F4",
+               "CC:71:C5:7B:34:8D:41:1F:4F:ED:CA:44:E8:0A:2E:76:3A:04:DB:78:F6:48:A7:34:7C:3B:04:1C:F0:54:EC:ED",
+               "60:3F:25:42:90:06:95:C9:FA:4E:2B:CA:BC:84:B9:17:E3:85:21:CD:C7:65:39:97:12:89:0D:68:58:47:9E:26"] }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["A5:81:80:DC:53:A2:AC:10:FF:5E:3F:0D:9B:F5:25:E2:F2:CA:14:78:39:BC:AD:2E:25:BE:16:33:0C:81:23:04",
+               "CC:71:C5:7B:34:8D:41:1F:4F:ED:CA:44:E8:0A:2E:76:3A:04:DB:78:F6:48:A7:34:7C:3B:04:1C:F0:54:EC:ED",
+               "60:3F:25:42:90:06:95:C9:FA:4E:2B:CA:BC:84:B9:17:E3:85:21:CD:C7:65:39:97:12:89:0D:68:58:47:9E:26"] }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["D9:4F:12:38:14:27:AE:2E:50:27:69:8B:E7:BA:67:E6:78:5E:E9:26:03:74:2F:A3:B0:1E:78:D0:C3:3B:18:1A"] }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["36:6F:CB:D2:23:17:61:CF:4D:E3:BC:07:A3:B9:76:23:A8:43:17:F9:E3:2E:2D:48:51:FD:BE:A0:6D:F4:40:C7"] }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["2A:E1:A4:B4:0C:CA:15:72:EA:2B:44:85:72:7E:98:DF:5A:07:20:9D:27:28:C6:D1:4C:FF:92:B4:A2:5C:BC:EA"] }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["60:70:86:7B:0E:A4:A1:CC:15:4B:CF:93:07:91:23:6A:C1:5B:B6:11:0A:95:C3:01:34:72:1C:A0:A8:8C:51:BB"] }
+},
+{
+  "relation": ["delegate_permission/common.handle_all_urls"],
+  "target" : { "namespace": "android_app", "package_name": "app.aristomate.gr",
+               "sha256_cert_fingerprints": ["BB:08:03:26:FF:DB:D3:26:0A:ED:FC:84:6A:B3:E9:9E:92:40:F1:CC:7A:E7:0C:26:97:15:F2:0F:3B:FD:B5:D3"] }
+}
+]
+

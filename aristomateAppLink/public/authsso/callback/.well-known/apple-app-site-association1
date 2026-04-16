@@ -1,0 +1,11 @@
+{
+  "applinks": {
+    "apps": ["ALRA2U6L5S.app.aristomate.gr"],
+    "details": [
+      {
+        "appID": "ALRA2U6L5S.app.aristomate.gr",
+        "paths": ["*"]
+      }
+    ]
+  }
+}

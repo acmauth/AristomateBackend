@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  applink:
+    build: ./aristomateAppLink
+    container_name: applink
+    restart: unless-stopped
+    volumes:
+      - ./aristomateAppLink/public:/app/public
+    ports:
+      - "8002:8000"
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.aristomate-applink-http.entryPoints=web"
+      - "traefik.http.routers.aristomate-applink-http.middlewares=redirect2https@file"
+      - "traefik.http.routers.aristomate-applink-http.rule=Host(`applink.aristomate.auth.gr`)"
+      - "traefik.http.routers.aristomate-applink-https.entryPoints=websecure"
+      - "traefik.http.routers.aristomate-applink-https.rule=Host(`applink.aristomate.auth.gr`)"
+      - "traefik.http.routers.aristomate-applink-https.tls=true"
+      - "traefik.http.routers.aristomate-applink-https.tls.certresolver=letsencrypt"
+      - "traefik.docker.network=traefik_network"
+      
+  api:
+    build: ./api
+    container_name: api
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    volumes:
+      - ./api:/app
+    environment:
+      - PYTHONUNBUFFERED=1
+      - PYTHONDONTWRITEBYTECODE=1
+    networks:
+      - traefik_network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.aristomate-api-http.entryPoints=web"
+      - "traefik.http.routers.aristomate-api-http.middlewares=redirect2https@file"
+      - "traefik.http.routers.aristomate-api-http.rule=Host(`api.aristomate.auth.gr`)"
+      - "traefik.http.routers.aristomate-api-https.entryPoints=websecure"
+      - "traefik.http.routers.aristomate-api-https.rule=Host(`api.aristomate.auth.gr`)"
+      - "traefik.http.routers.aristomate-api-https.tls=true"
+      - "traefik.http.routers.aristomate-api-https.tls.certresolver=letsencrypt"
+      - "traefik.docker.network=traefik_network"
+
+networks:
+  traefik_network:
+    external: true
