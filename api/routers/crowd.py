@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from zoneinfo import ZoneInfo
 from fastapi import Query, HTTPException
+from utils.cache_manager import cache_manager
 
 router = APIRouter()
 load_dotenv()
@@ -20,7 +21,9 @@ API_KEY = os.getenv('CROWD_API_KEY')
 
 BIN_MINUTES = 5
 HISTORY_DAYS = 28
-MIN_SAMPLES = 50                 # min. windows needed for a per-period baseline
+MIN_SAMPLES = 50                 # min. windows for a meal period to count toward the baseline
+BASELINE_TTL = timedelta(days=30)
+BASELINE_CACHE_TYPE = "crowd_baselines"
 LOCAL_TZ = ZoneInfo("Europe/Athens")
 TIMESTAMPS_ARE_LOCAL = True      # API sends local wall-clock time with a fake "Z"
 
@@ -60,10 +63,14 @@ def extract_rows(body) -> list:
     raise HTTPException(502, f"Unexpected upstream response: {str(body)[:300]}")
 
 
-def build_series(body, start: datetime, end: datetime) -> pd.Series:
+def build_series(body, start: datetime, end: datetime, allow_empty: bool = False) -> pd.Series:
     """API response -> regular 5-min series of InCount in naive local time; missing bins = 0."""
+    full = pd.date_range(start, end - timedelta(minutes=BIN_MINUTES),
+                         freq=f"{BIN_MINUTES}min")
     rows = extract_rows(body)
     if not rows:
+        if allow_empty:
+            return pd.Series(0.0, index=full)
         raise HTTPException(404, "No visits data returned")
     df = pd.DataFrame(rows)
     if "Datetime" not in df.columns or "InCount" not in df.columns:
@@ -77,38 +84,26 @@ def build_series(body, start: datetime, end: datetime) -> pd.Series:
         ts = ts.dt.tz_convert(LOCAL_TZ).dt.tz_localize(None)
     s = pd.Series(df["InCount"].astype(float).values, index=pd.DatetimeIndex(ts))
     s = s.groupby(level=0).sum().sort_index()
-    full = pd.date_range(start, end - timedelta(minutes=BIN_MINUTES),
-                         freq=f"{BIN_MINUTES}min")
     return s.reindex(full, fill_value=0.0)
 
 
-def compute_baselines(occupancy: pd.Series, percentile: float) -> dict:
-    """Per-period baselines (+ 'global' fallback) from open, non-empty windows."""
+def compute_baseline(occupancy: pd.Series, percentile: float) -> float:
+    """Building-wide baseline: the highest percentile occupancy of any meal period.
+
+    The building has a fixed capacity, so the busiest period sets the reference.
+    """
     labels = period_labels(occupancy.index)
     mask = labels.notna() & (occupancy > 0)
     windows, win_labels = occupancy[mask], labels[mask]
     if windows.empty:
         raise HTTPException(404, "Not enough data to build a baseline")
 
-    global_b = {
-        "baseline": float(windows.quantile(percentile)),
-        "max": float(windows.max()),
-        "samples": int(len(windows)),
-        "fallback": False,
-    }
-    baselines = {"global": global_b}
+    candidates = [windows.quantile(percentile)]        # all open windows
     for name in PERIODS:
         vals = windows[win_labels == name]
         if len(vals) >= MIN_SAMPLES:
-            baselines[name] = {
-                "baseline": float(vals.quantile(percentile)),
-                "max": float(vals.max()),
-                "samples": int(len(vals)),
-                "fallback": False,
-            }
-        else:
-            baselines[name] = {**global_b, "samples": int(len(vals)), "fallback": True}
-    return baselines
+            candidates.append(vals.quantile(percentile))
+    return float(max(candidates))
 
 
 def crowd_level(ratio: float) -> str:
@@ -121,18 +116,7 @@ def crowd_level(ratio: float) -> str:
     return "crowded"
 
 
-@router.get("/crowd")
-async def get_crowd_endpoint(
-    place_code: Optional[str] = Query("dining-auth"),
-    stay_minutes: int = Query(20, ge=BIN_MINUTES),
-    percentile: float = Query(0.95, gt=0, le=1),
-):
-    """Estimate how crowded a place is right now vs. its own history."""
-    now_local = datetime.now(LOCAL_TZ).replace(tzinfo=None)
-    end = now_local.replace(minute=now_local.minute - now_local.minute % BIN_MINUTES,
-                            second=0, microsecond=0)      # last complete bin boundary
-    start = end - timedelta(days=HISTORY_DAYS)
-
+async def fetch_visits(place_code: str, start: datetime, end: datetime):
     url = "https://app.product-me.eu/api/v1/clientApi/get-visits/getVisitsBy5Minutes"
     headers = {"x-api-key": f"{API_KEY}", "content-type": "application/json"}
     payload = {
@@ -146,13 +130,46 @@ async def get_crowd_endpoint(
         resp = await client.post(url, headers=headers, json=payload)
     if resp.status_code != 200:
         raise HTTPException(resp.status_code, "Upstream visits API error")
+    return resp.json()
 
-    series = build_series(resp.json(), start, end)
 
-    n_bins = max(1, stay_minutes // BIN_MINUTES)
+async def get_baseline(place_code: str, stay_minutes: int, percentile: float,
+                       n_bins: int, now_local: datetime, end: datetime) -> float:
+    """Building baseline, recomputed from history at most once per BASELINE_TTL."""
+    key = f"{place_code}:{stay_minutes}:{percentile:.2f}"
+    cached_item = cache_manager.get_cached_item(BASELINE_CACHE_TYPE, key)
+    if cached_item:
+        data, timestamp = cached_item
+        if now_local - timestamp < BASELINE_TTL:
+            return data
+
+    start = end - timedelta(days=HISTORY_DAYS)
+    body = await fetch_visits(place_code, start, end)
+    series = build_series(body, start, end)
     occupancy = series.rolling(n_bins).sum().dropna()      # overlapping windows, stride = 1 bin
+    baseline = compute_baseline(occupancy, percentile)
+    cache_manager.set_cached_item(BASELINE_CACHE_TYPE, key, baseline, now_local)
+    return baseline
 
-    baselines = compute_baselines(occupancy, percentile)
+
+@router.get("/crowd")
+async def get_crowd_endpoint(
+    place_code: Optional[str] = Query("dining-auth"),
+    stay_minutes: int = Query(20, ge=BIN_MINUTES),
+    percentile: float = Query(0.95, ge=0.85, le=1),
+):
+    """Estimate how crowded a place is right now vs. its busiest meal period in recent history."""
+    percentile = round(percentile, 2)                      # bounds the number of cache entries
+    now_local = datetime.now(LOCAL_TZ).replace(tzinfo=None)
+    end = now_local.replace(minute=now_local.minute - now_local.minute % BIN_MINUTES,
+                            second=0, microsecond=0)      # last complete bin boundary
+    n_bins = max(1, stay_minutes // BIN_MINUTES)
+
+    # Only the latest window is needed per request; the baseline comes from the cache.
+    recent_start = end - timedelta(minutes=n_bins * BIN_MINUTES)
+    body = await fetch_visits(place_code, recent_start, end)
+    series = build_series(body, recent_start, end, allow_empty=True)
+    occupancy = series.rolling(n_bins).sum().dropna()
 
     last_ts = occupancy.index[-1]
     period = period_labels(occupancy.index[-1:]).iloc[0]
@@ -167,14 +184,15 @@ async def get_crowd_endpoint(
         return {**result, "is_open": False, "level": "closed",
                 "current_window_visits": None, "baseline_visits": None, "ratio": None}
 
-    b = {"baseline": max([b["baseline"] for b in baselines.values()])}
+    baseline = await get_baseline(place_code, stay_minutes, percentile,
+                                  n_bins, now_local, end)
     current = float(occupancy.iloc[-1])
-    ratio = current / b["baseline"] if b["baseline"] else 0.0
+    ratio = current / baseline if baseline else 0.0
     return {
         **result,
         "is_open": True,
         "current_window_visits": current,
-        "baseline_visits": b["baseline"],
+        "baseline_visits": baseline,
         "ratio": round(ratio, 3),
         "level": crowd_level(ratio),
     }
