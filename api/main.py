@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 import asyncio
 
-from routers import menu_router, map_router
+from routers import menu_router, map_router, crowd_router
 from routers.menu import scrape_all_locales, schedule_daily_scraping
 
 
@@ -26,3 +26,4 @@ app.add_middleware(
 
 app.include_router(menu_router)
 app.include_router(map_router)
+app.include_router(crowd_router)

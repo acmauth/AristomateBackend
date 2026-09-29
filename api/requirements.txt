@@ -4,3 +4,4 @@ beautifulsoup4
 uvicorn
 requests
 dotenv
+pandas
