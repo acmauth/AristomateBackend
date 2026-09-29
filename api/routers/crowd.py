@@ -127,7 +127,7 @@ async def get_crowd_endpoint(
     stay_minutes: int = Query(20, ge=BIN_MINUTES),
     percentile: float = Query(0.95, gt=0, le=1),
 ):
-    """Estimate how crowded a place is right now vs. its own history, per meal period."""
+    """Estimate how crowded a place is right now vs. its own history."""
     now_local = datetime.now(LOCAL_TZ).replace(tzinfo=None)
     end = now_local.replace(minute=now_local.minute - now_local.minute % BIN_MINUTES,
                             second=0, microsecond=0)      # last complete bin boundary
